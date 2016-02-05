@@ -1233,25 +1233,6 @@ module ActiveResource
       id.hash
     end
 
-    # Duplicates the current resource without saving it.
-    #
-    # ==== Examples
-    #   my_invoice = Invoice.create(:customer => 'That Company')
-    #   next_invoice = my_invoice.dup
-    #   next_invoice.new? # => true
-    #
-    #   next_invoice.save
-    #   next_invoice == my_invoice # => false (different id attributes)
-    #
-    #   my_invoice.customer   # => That Company
-    #   next_invoice.customer # => That Company
-    def dup
-      self.class.new.tap do |resource|
-        resource.attributes     = @attributes
-        resource.prefix_options = @prefix_options
-      end
-    end
-
     # Saves (+POST+) or \updates (+PUT+) a resource. Delegates to +create+ if the object is \new,
     # +update+ if it exists. If the response to the \save includes a body, it will be assumed that this body
     # is Json for the final object as it looked after the \save (which would include attributes like +created_at+
@@ -1513,6 +1494,23 @@ module ActiveResource
 
     private
 
+      # Duplicates the current resource without saving it.
+      #
+      # ==== Examples
+      #   my_invoice = Invoice.create(:customer => 'That Company')
+      #   next_invoice = my_invoice.dup
+      #   next_invoice.new? # => true
+      #
+      #   next_invoice.save
+      #   next_invoice == my_invoice # => false (different id attributes)
+      #
+      #   my_invoice.customer   # => That Company
+      #   next_invoice.customer # => That Company
+      def initialize_copy(orig)
+        super
+        @persisted = false
+      end
+      
       def read_attribute_for_serialization(n)
         attributes[n]
       end

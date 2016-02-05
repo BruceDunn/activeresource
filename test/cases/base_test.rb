@@ -963,6 +963,15 @@ class BaseTest < ActiveSupport::TestCase
     end
     assert_raise(ActiveResource::ResourceConflict) { Person.create(:name => 'Rick') }
   end
+  
+  def test_dup
+    rick = Person.create(:name => 'Rick')
+    assert !rick.new?
+
+    new_rick = rick.dup
+    assert new_rick.new?
+    assert rick.id, new_rick.id
+  end
 
   def test_create_without_location
     ActiveResource::HttpMock.respond_to do |mock|
