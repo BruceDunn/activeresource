@@ -2,8 +2,22 @@ module ActiveResource
   class LogSubscriber < ActiveSupport::LogSubscriber
     def request(event)
       result = event.payload[:result]
+
+      # BD: Added this fix https://github.com/rails/activeresource/commit/48729fd4ec33971910cb4e348d8ed64939dc46be
+      #     to prevent error logs like the following when we don't get a response from ExistDB (timeouts I think):
+      #  ERROR -- : Could not log "request.active_resource" event. NoMethodError: undefined method `code' for nil:NilClass
+      #
+      #
+      # When result is nil, the connection could not even be initiated
+      # with the server, so we log an internal synthetic error response (523).
+      code    = result.try(:code)    || 523  # matches CloudFlare's convention
+      message = result.try(:message) || "ActiveResource connection error"
+      body    = result.try(:body)    || ""
+
+      log_level_method = code.to_i < 400 ? :info : :error
+
       info "#{event.payload[:method].to_s.upcase} #{event.payload[:request_uri]}"
-      info "--> %d %s %d (%.1fms)" % [result.code, result.message, result.body.to_s.length, event.duration]
+      info "--> %d %s %d (%.1fms)" % [code, message, body.to_s.length, event.duration]
     end
 
     def logger
